@@ -5,6 +5,9 @@ const user = require("./user");
 const path = require('path');
 const fs = require('fs');
 const dl = require('delivery');
+const express = require('express');
+const socketIO = require('socket.io');
+
 
 module.exports = class server {
     constructor(){
@@ -13,7 +16,13 @@ module.exports = class server {
     }
 
     start(){
-        const [app, http, io] = customExpress();
+
+        const PORT = process.env.PORT || 3000;
+
+        const server = express()
+        .listen(PORT, () => console.log(`Listening on ${PORT}`));
+
+        const io = socketIO(server);
 
         io.on('connection', (socket) => {
             console.log(`A user connected: ${socket.id}`);
@@ -163,7 +172,7 @@ module.exports = class server {
         });
         
         
-        http.listen(8080, ()=> console.log("API listening on port 8080"));
+        //http.listen(8080, ()=> console.log("API listening on port 8080"));
     }
 
     getUser(socket){
