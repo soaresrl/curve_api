@@ -127,6 +127,27 @@ module.exports = class model {
         });
     }
 
+    selectPick(x, y, tol){
+        if (this.curves.length < 1) {
+            return;
+        }
+
+        let xC, yC;
+        let id_target = -1;
+        let dmin = tol;
+        this.curves.forEach(curve => {
+            xC = x;
+            yC = y;
+
+            const d = curve.closestPoint({x: xC, y: yC});
+
+            if (d < dmin) {
+                dmin = d;
+                curve.setSelected(!curve.isSelected());
+            }
+        });
+    }
+
     intersectTwoCurves(){
         if (this.curves.length < 1) {
             return
@@ -226,7 +247,25 @@ module.exports = class model {
     }
 
     delCurve(curve_id){
+        console.log(`curve id: ${curve_id}`);
         delete this.curves[curve_id];
         this.curves.splice(curve_id, 1);
+    }
+
+    delSelectedCurves(){
+        let curveRemoved;
+        do {
+            curveRemoved = false;
+            for (let i = 0; i < this.curves.length; i++) {
+                
+                if (this.curves[i].isSelected()) {
+                    
+                    this.delCurve(i);
+                    curveRemoved = true;
+                    break;
+                }
+                
+            }
+        } while (curveRemoved);
     }
 }

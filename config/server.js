@@ -107,17 +107,20 @@ module.exports = class server {
             })
 
             socket.on('select-fence', (xmin, xmax, ymin, ymax)=>{
+                
                 var user = this.getUser(socket);
                 if(user.isAdmin) 
                 {
                     var room = this.getRoom(user.socket.id);
                     
                     room.model.selectFence(xmin, xmax, ymin, ymax);
+                    console.log(room.model.curves);
                 }
                 else if (user.room) {
                     var room = user.room;
 
                     room.model.selectFence(xmin, xmax, ymin, ymax);
+                    console.log(room.model.curves);
                 } 
                 else
                 {
@@ -125,11 +128,30 @@ module.exports = class server {
                 }
             })
 
-            socket.on('intersect', ()=>{
-                var user = this.getUser(socket);
+            socket.on('select-pick', (x, y, tol)=>{
+                const user = this.getUser(socket);
                 if(user.isAdmin) 
                 {
-                    var room = this.getRoom(user.socket.id);
+                    const room = this.getRoom(user.socket.id);
+                    
+                    room.model.selectPick(x, y, tol);
+                }
+                else if (user.room) {
+                    const room = user.room;
+
+                    room.model.selectPick(x, y, tol);
+                } 
+                else
+                {
+                    user.model.selectPick(x, y, tol);
+                }
+            })
+
+            socket.on('intersect', ()=>{
+                const user = this.getUser(socket);
+                if(user.isAdmin) 
+                {
+                    const room = this.getRoom(user.socket.id);
                     
                     room.model.intersectTwoCurves();
                     room.users.forEach(usr => {
@@ -137,9 +159,37 @@ module.exports = class server {
                     });
                 } 
                 else if (user.room) {
-                    var room = user.room;
+                    const room = user.room;
 
                     room.model.intersectTwoCurves();
+                    room.users.forEach(usr => {
+                        usr.socket.emit('update-model', room.model);
+                    });
+                    room.admin.socket.emit('update-model', room.model);
+                } 
+                else
+                {
+                    user.model.intersectTwoCurves();
+                }
+
+            })
+
+            socket.on('delete-curves', ()=>{
+                const user = this.getUser(socket);
+
+                if(user.isAdmin) 
+                {
+                    const room = this.getRoom(user.socket.id);
+                    
+                    room.model.delSelectedCurves();
+                    room.users.forEach(usr => {
+                        usr.socket.emit('update-model', room.model);
+                    });
+                } 
+                else if (user.room) {
+                    const room = user.room;
+
+                    room.model.delSelectedCurves();
                     room.users.forEach(usr => {
                         usr.socket.emit('update-model', room.model);
                     });
@@ -147,7 +197,7 @@ module.exports = class server {
                 } 
                 else
                 {
-                    user.model.intersectTwoCurves();
+                    user.model.delSelectedCurves();
                 }
             })
 
@@ -156,10 +206,10 @@ module.exports = class server {
             })
         
             socket.on('disconnect', ()=>{
-                var user = this.getUser(socket);
+                const user = this.getUser(socket);
                 if(user.isAdmin)
                 {
-                    var room = this.getRoom(user.socket.id);
+                    const room = this.getRoom(user.socket.id);
                     room.users.forEach(user => {
                         user.room = null;
                         user.socket.emit('room-disconnected');
